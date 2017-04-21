@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>Examples</title>
+<meta name="description" content="">
+<meta name="keywords" content="">
+<link href="" rel="stylesheet">
+<!-- <script src="jquery-3.1.1.js"></script> -->
+<style type="text/css">
+	*{margin: 0;padding: 0;}
+	li{list-style:none;}
+	.slide{width: 640px;height: 320px;margin: 100px auto;position: relative;overflow: hidden;}
+	.slide .bd {position: relative;}
+	.slide .bd li{float: left;width: 640px;}
+	img{vertical-align: top;}
+	.hd {position: absolute;bottom:5px;left: 0;width: 100%;text-align: center;}
+	.hd li {cursor: pointer;width: 12px;height: 12px;margin: 0 6px;display: inline-block;background: #fff;border-radius: 50%;}
+    .hd li.on{background: red;}
+</style>
+</head>
+<body>
+    <div class="slide slide1">
+    	<div class="bd">
+    		<ul>
+    			<li><img src="images/b1.png" height="320" width="642" alt=""></li>
+    			<li><img src="images/b2.png" height="320" width="642" alt=""></li>
+    			<li><img src="images/b3.png" height="320" width="642" alt=""></li>
+    			<li><img src="images/b4.png" height="320" width="642" alt=""></li>
+    		</ul>
+    	</div>
+    	<div class="hd">
+    		<ul></ul>
+    	</div>
+    </div>
+    <div class="slide slide2">
+        <div class="bd">
+            <ul>
+                <li><img src="images/b1.png" height="320" width="642" alt=""></li>
+                <li><img src="images/b2.png" height="320" width="642" alt=""></li>
+                <li><img src="images/b3.png" height="320" width="642" alt=""></li>
+                <li><img src="images/b4.png" height="320" width="642" alt=""></li>
+            </ul>
+        </div>
+        <div class="hd">
+            <ul></ul>
+        </div>
+    </div>
+    <script>
+        //让nodelist直接能使用数组方法
+    	let each = function(nodeList,cb){
+    		return [].forEach.call(nodeList, cb)
+    	}
+
+        //找到元素的兄弟节点
+    	let siblings = function(el){
+    		var nodeList = [];
+    		var child = el.parentNode.children;
+    		each(child,function(item, index) {
+    			if(item != el){
+    				nodeList.push(item)
+    			}
+    		});
+    		return nodeList;
+    	}
+
+        /*
+        * main function
+        * param : object {el,effect}  
+        */
+    	let slide = function(param){
+
+    		let t = document.querySelector(param.el);
+    		let bd = t.querySelector('.bd');
+    		let bdCell = bd.children[0];
+    		let hd = t.querySelector('.hd ul');
+    		let bdItem = bd.querySelectorAll('li');
+    		for(let i=0, len=bdItem.length; i<len; i++){
+    			hd.appendChild(document.createElement('li'))
+    		};
+    		let hdItem = hd.querySelectorAll('li');
+    		let index = 0;
+    		let oldIndex = 0;
+            let autoTimer = null;
+            let timer = null;
+            let count = 0;
+
+            hdItem[0].classList.add('on');
+
+            switch(param.effect){
+                case 'left':
+                    let wrapWidth = bdItem[0].offsetWidth * bdItem.length;
+                    bdCell.style.cssText = 'position:relative;width:' + wrapWidth + 'px;left:0';
+                    break;
+                case 'top':
+                    let wrapHeight = bdItem[0].offsetHeight * bdItem.length;
+                    bdCell.style.cssText = 'position:relative;height:' + wrapHeight + 'px;top:0';
+                    break;
+                case 'opacity':
+                    each(bdItem,function(item,_index) {                       
+                        if(_index == 0){
+                            item.style.cssText = 'position:absolute;left:0;top:0;opacity:1;'
+                        }else{
+                            item.style.cssText = 'position:absolute;left:0;top:0;opacity:0';
+                        }
+                    });
+            }
+
+            //切换函数
+    		let handle = function(index){               
+    			switch(param.effect){
+    				case 'left':
+    					animate({
+    						el:bdCell,
+    						prop:'left',
+    						target:-index * bdItem[0].offsetWidth
+    					})
+    					break;
+    				case 'top':
+    					animate({
+    						el:bdCell,
+    						prop:'top',
+    						target:-index * bdItem[0].offsetHeight
+    					})
+    					break;
+    				case 'opacity':
+                        animate({
+                            el:bdCell,
+                            prop:'opacity'
+                        })
+                        break;	
+    				default:
+    					each(bdItem,function(el,i) {
+			 				 el.style.display = 'none';  			
+			    		});
+			    		bdItem[index].style.display = 'block'
+			    }
+    		}
+    		
+
+            //动画函数
+    		let animate=function(param){
+    			clearInterval(timer)
+    			let el = param.el;
+    			let prop = param.prop;
+    			let target = param.target;
+    			let intval = 13;
+    			timer = setInterval(function(){
+    				var offset = 0;
+    				if(param.prop == 'left'){
+    					offset = el.offsetLeft;
+    				}else if(param.prop == 'top'){
+    					offset = el.offsetTop;
+    				}else if(param.prop == 'opacity'){
+                        fade(bdItem[index])
+    					return
+    				}	
+    				let speed = (target - offset)/8 * .9;
+    				speed = speed > 0 ? Math.ceil(speed) : Math.floor(speed);
+    				if(  Math.abs(offset - target)>1 ){
+    					el.style[prop] = offset + speed + 'px';
+    				}else{
+    					clearInterval(timer);
+    					el.style[prop] = target+'px';
+    				}
+    			},intval)
+    		}
+
+            let fade = function(cur){
+                count += .06;
+                if(count >= 1){
+                    clearInterval(timer);
+                    count = 0;
+                    cur.style.opacity = 1;
+                    each(siblings(cur),function(el) {
+                        if(el.style.opacity != 0){
+                            el.style.opacity = 0;
+                        }
+                    });
+                }else{
+                    cur.style.opacity = count;
+                    each(siblings(cur),function(el) {
+                        if(el.style.opacity != 0){
+                            el.style.opacity = parseFloat(el.style.opacity) - count;
+                        }
+                    });
+                }
+                
+            }
+
+			//给圆点绑定事件
+    		each(hdItem,function(item,_index){
+    			item.addEventListener('mouseover',function(){
+    				clearInterval(autoTimer);
+    				item.classList.add('on');
+    				each(siblings(item),function(item) {
+    					item.classList.remove('on')
+    				});
+    				index = _index;
+    				handle(index)
+    			});
+    			item.addEventListener('mouseout',function(){
+    				setInter();
+    			})
+    		});
+
+            //自动播放函数
+    		function setInter(){
+    			autoTimer = setInterval(function(){
+	    			if(index >= bdItem.length-1){
+	    				index = 0;
+	    			}else{
+	    				index ++;	
+	    			}
+                    each(hdItem,function(el,_index) {
+                        if(_index == index){
+                            el.classList.add('on')
+                        }else{
+                            el.classList.remove('on')
+                        }
+                    });
+	    			handle(index)
+	    		},3500)
+    		}
+
+    		setInter();
+    	}
+
+    	slide({
+    		el:'.slide1',
+    		effect:'opacity'
+    	})
+
+        slide({
+            el:'.slide2',
+            effect:'top'
+        })
+    </script>
+</body>
+</html>
